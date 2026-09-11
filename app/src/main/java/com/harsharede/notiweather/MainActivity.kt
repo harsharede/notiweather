@@ -42,6 +42,12 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshUi()
+        // Second line of defense if a swipe-dismiss didn't trigger
+        // NotificationDismissReceiver (some OEM shades don't fire it):
+        // catch it here whenever the user reopens the app.
+        if (Scheduler.isRunning(this) && !NotificationHelper.isShowing(this)) {
+            Scheduler.refreshNow(this)
+        }
     }
 
     private fun onToggleClicked() {

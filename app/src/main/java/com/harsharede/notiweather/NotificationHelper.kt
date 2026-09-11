@@ -33,7 +33,12 @@ import kotlin.math.roundToInt
  */
 object NotificationHelper {
 
-    private const val CHANNEL_ID = "weather_updates"
+    // "_v2": importance moved from LOW to DEFAULT (see ensureChannel) — an
+    // already-created channel's importance can't be changed from code, so a
+    // fresh channel ID is the only way to pick that change up on devices
+    // that installed an earlier version.
+    private const val CHANNEL_ID = "weather_updates_v2"
+    private const val LEGACY_CHANNEL_ID = "weather_updates"
     private const val NOTIFICATION_ID = 1001
 
     fun show(context: Context, weather: WeatherSnapshot, locationName: String?) {
@@ -114,17 +119,30 @@ object NotificationHelper {
         NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
     }
 
+    /** Whether the weather notification is currently visible. */
+    fun isShowing(context: Context): Boolean {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return manager.activeNotifications.any { it.id == NOTIFICATION_ID }
+    }
+
     private fun ensureChannel(context: Context) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        // Low-importance channels land in the shade's collapsed "silent"
+        // bucket on some OEM skins, where swipe-to-dismiss doesn't reliably
+        // fire the delete broadcast NotificationDismissReceiver listens
+        // for. Default importance keeps it in the normal list instead;
+        // sound/vibration are silenced explicitly so it stays quiet.
+        manager.deleteNotificationChannel(LEGACY_CHANNEL_ID)
         if (manager.getNotificationChannel(CHANNEL_ID) == null) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 context.getString(R.string.notification_channel_name),
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = context.getString(R.string.notification_channel_description)
                 setShowBadge(false)
                 enableVibration(false)
+                setSound(null, null)
             }
             manager.createNotificationChannel(channel)
         }

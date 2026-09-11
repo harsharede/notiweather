@@ -25,12 +25,8 @@ object Scheduler {
     fun start(context: Context) {
         Prefs.setEnabled(context, true)
 
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
-
         val periodicRequest = PeriodicWorkRequestBuilder<WeatherUpdateWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(constraints)
+            .setConstraints(networkConstraints())
             .setBackoffCriteria(
                 BackoffPolicy.LINEAR,
                 WorkRequest.MIN_BACKOFF_MILLIS,
@@ -46,10 +42,7 @@ object Scheduler {
 
         // Also run once immediately so the notification appears right away
         // instead of waiting up to 15 minutes for the first refresh.
-        val oneOffRequest = OneTimeWorkRequestBuilder<WeatherUpdateWorker>()
-            .setConstraints(constraints)
-            .build()
-        WorkManager.getInstance(context).enqueue(oneOffRequest)
+        refreshNow(context)
     }
 
     fun stop(context: Context) {
@@ -58,5 +51,18 @@ object Scheduler {
         NotificationHelper.clear(context)
     }
 
+    /** Queues a single immediate refresh, outside the 15-minute schedule. */
+    fun refreshNow(context: Context) {
+        val oneOffRequest = OneTimeWorkRequestBuilder<WeatherUpdateWorker>()
+            .setConstraints(networkConstraints())
+            .build()
+        WorkManager.getInstance(context).enqueue(oneOffRequest)
+    }
+
     fun isRunning(context: Context): Boolean = Prefs.isEnabled(context)
+
+    private fun networkConstraints(): Constraints =
+        Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
 }
