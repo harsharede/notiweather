@@ -2,9 +2,10 @@
 
 An open-source, ad-free, tracker-free weather app for Android that lives in
 your status bar instead of asking you to open an app. It shows the current
-temperature as its notification icon, and expanding it shows the current
-conditions plus the next two hours — just icons and numbers, nothing to
-scroll through.
+temperature as its notification icon; your area's name, today's high/low,
+and sunrise/sunset in the notification's title/subtitle; and the current
+conditions plus the next two hours when you expand it — just icons and
+numbers, nothing to scroll through.
 
 ## How it stays battery-friendly
 
@@ -20,11 +21,15 @@ cached is available.
 ## Features
 
 - Current temperature as the status bar icon (drawn on-device, no bundled
-  icon set) and current + next 2 hours in the expanded notification
-- Weather from [Open-Meteo](https://open-meteo.com) — free, open data, no
+  icon set)
+- Place name, today's high/low, and sunrise/sunset in the notification's
+  title/subtitle — visible whether it's collapsed or expanded
+- Current + next 2 hours (icon + temperature) in the expanded notification
+- Weather from [Open-Meteo](https://open-meteo.com) and place names from
+  [OpenStreetMap Nominatim](https://nominatim.org) — both free, open, no
   API key, no account
-- No ads, no analytics, no third-party SDKs; the app only talks to
-  Open-Meteo
+- No ads, no analytics, no third-party SDKs; the app only talks to those
+  two services
 - No Google Play services dependency — location comes from Android's own
   `LocationManager`
 - Survives reboots: if you left updates on, they resume automatically
@@ -49,16 +54,18 @@ skins — see [Contributing](#contributing) if you'd like to help.
 
 ```
 app/src/main/java/com/harsharede/notiweather/
-  MainActivity.kt          Permission requests + on/off toggle
-  Scheduler.kt              Owns the WorkManager periodic request
-  WeatherUpdateWorker.kt    CoroutineWorker: location -> weather -> notification
-  LocationHelper.kt         Cached-first location lookup via LocationManager
-  WeatherApi.kt              Open-Meteo HTTP client + JSON parsing
-  WeatherCode.kt             WMO weather code -> emoji/description
-  NotificationHelper.kt      Builds the notification, draws the temperature
-                             status-bar icon, fills the expanded custom view
-  Prefs.kt                   Tiny on/off flag in SharedPreferences
-  BootReceiver.kt             Re-enqueues the periodic work after a reboot
+  MainActivity.kt              Permission requests + on/off toggle
+  Scheduler.kt                  Owns the WorkManager periodic request
+  WeatherUpdateWorker.kt        CoroutineWorker: location -> weather -> notification
+  LocationHelper.kt             Cached-first location lookup via LocationManager
+  WeatherApi.kt                  Open-Meteo HTTP client + JSON parsing
+  GeocodingApi.kt                Nominatim reverse geocoding (coords -> place name)
+  WeatherCode.kt                 WMO weather code -> emoji/description
+  NotificationHelper.kt          Builds the notification, draws the temperature
+                                 status-bar icon, fills the expanded custom view
+  Prefs.kt                       Tiny on/off flag in SharedPreferences
+  BootReceiver.kt                 Re-enqueues the periodic work after a reboot
+  NotificationDismissReceiver.kt  Re-posts the notification if it gets swiped away
 ```
 
 ## Getting started
@@ -76,9 +83,10 @@ app/src/main/java/com/harsharede/notiweather/
 ## Privacy
 
 The app requests approximate/precise location only to send it straight to
-Open-Meteo's forecast endpoint over HTTPS — nothing is sent anywhere else,
-nothing is stored beyond an on-device on/off flag, and there's no analytics
-or crash-reporting SDK.
+Open-Meteo's forecast endpoint and OpenStreetMap's Nominatim reverse-geocoding
+endpoint, both over HTTPS — nothing is sent anywhere else, nothing is stored
+beyond an on-device on/off flag, and there's no analytics or crash-reporting
+SDK.
 
 ## Contributing
 
@@ -97,4 +105,6 @@ MIT — see [LICENSE](LICENSE).
 ## Attribution
 
 Weather data provided by [Open-Meteo.com](https://open-meteo.com), licensed
-under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Place names
+from [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors,
+via the [Nominatim](https://nominatim.org) API.

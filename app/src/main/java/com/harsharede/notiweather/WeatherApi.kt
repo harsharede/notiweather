@@ -16,6 +16,12 @@ data class HourPoint(
 data class WeatherSnapshot(
     val currentTemperature: Double,
     val currentWeatherCode: Int,
+    val dailyHigh: Double,
+    val dailyLow: Double,
+    /** Local time, e.g. "06:23". */
+    val sunrise: String,
+    /** Local time, e.g. "18:45". */
+    val sunset: String,
     /** The next hours after now, closest first. Usually 2 entries, may be fewer near a data boundary. */
     val upcoming: List<HourPoint>
 )
@@ -36,6 +42,7 @@ object WeatherApi {
                 "$BASE_URL?latitude=$latitude&longitude=$longitude" +
                     "&current=temperature_2m,weather_code" +
                     "&hourly=temperature_2m,weather_code" +
+                    "&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset" +
                     "&forecast_days=2&timezone=auto"
             )
             val connection = url.openConnection() as HttpURLConnection
@@ -99,9 +106,15 @@ object WeatherApi {
             }
         }
 
+        val daily = root.getJSONObject("daily")
+
         return WeatherSnapshot(
             currentTemperature = currentTemp,
             currentWeatherCode = currentCode,
+            dailyHigh = daily.getJSONArray("temperature_2m_max").getDouble(0),
+            dailyLow = daily.getJSONArray("temperature_2m_min").getDouble(0),
+            sunrise = daily.getJSONArray("sunrise").getString(0).substringAfter('T'),
+            sunset = daily.getJSONArray("sunset").getString(0).substringAfter('T'),
             upcoming = upcoming
         )
     }

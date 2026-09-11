@@ -7,12 +7,11 @@
     <string name="action_enable">Enable</string>
     <string name="action_disable">Disable</string>
 
-    <string name="explanation">NotiWeather uses your approximate location to fetch weather from the free, open Open-Meteo API roughly every 15 minutes, then shows it as a small ongoing notification: the current temperature as the status bar icon, and the current conditions plus the next two hours when you expand it. No account, no ads, no analytics — the app only talks to Open-Meteo.</string>
-    <string name="attribution">Weather data by open-meteo.com</string>
+    <string name="explanation">NotiWeather uses your approximate location to fetch weather from the free, open Open-Meteo API roughly every 15 minutes, then shows it as a small ongoing notification: the current temperature as the status bar icon, and your area\'s name, today\'s high/low, sunrise/sunset, and the next two hours when you expand it. No account, no ads, no analytics — the app only talks to Open-Meteo (weather) and OpenStreetMap\'s Nominatim (turning your coordinates into a place name).</string>
+    <string name="attribution">Weather data by open-meteo.com · Place names by OpenStreetMap Nominatim</string>
     <string name="permission_denied">Location permission is needed to show local weather</string>
 
     <string name="notification_channel_name">Weather updates</string>
     <string name="notification_channel_description">Ongoing notification showing current and upcoming weather</string>
-    <string name="notification_fallback_text">Tap to open NotiWeather</string>
     <string name="label_now">Now</string>
 </resources>

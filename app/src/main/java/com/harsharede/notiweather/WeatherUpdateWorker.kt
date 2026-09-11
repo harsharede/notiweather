@@ -26,7 +26,8 @@ class WeatherUpdateWorker(
 
         return try {
             val weather = WeatherApi.fetchWeather(location.latitude, location.longitude)
-            NotificationHelper.show(applicationContext, weather)
+            val locationName = GeocodingApi.reverseGeocode(location.latitude, location.longitude)
+            NotificationHelper.show(applicationContext, weather, locationName)
             Result.success()
         } catch (e: Exception) {
             Result.retry()

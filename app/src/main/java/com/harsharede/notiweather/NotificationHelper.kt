@@ -23,8 +23,10 @@ import kotlin.math.roundToInt
 
 /**
  * Builds and shows the single ongoing weather notification: the current
- * temperature drawn as the small (status bar) icon, and current + next two
- * hours laid out in the expanded custom view. Marked [NotificationCompat.Builder.setOngoing]
+ * temperature drawn as the small (status bar) icon; place name, today's
+ * high/low and sunrise/sunset in the title/subtitle (visible whether the
+ * notification is collapsed or expanded); and current + next two hours
+ * laid out in the expanded custom view. Marked [NotificationCompat.Builder.setOngoing]
  * so it isn't swipeable in stock Android, but some OEM notification shades
  * (and Android 14+'s relaxed dismissal rules) let the user swipe it away
  * anyway — [NotificationDismissReceiver] catches that and re-posts it.
@@ -34,7 +36,7 @@ object NotificationHelper {
     private const val CHANNEL_ID = "weather_updates"
     private const val NOTIFICATION_ID = 1001
 
-    fun show(context: Context, weather: WeatherSnapshot) {
+    fun show(context: Context, weather: WeatherSnapshot, locationName: String?) {
         ensureChannel(context)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -83,12 +85,16 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val locationPrefix = if (locationName.isNullOrBlank()) "" else "$locationName · "
+        val title = "$locationPrefix${formatTemp(weather.currentTemperature)} · " +
+            WeatherCode.description(weather.currentWeatherCode)
+        val subtitle = "H:${formatTemp(weather.dailyHigh)} L:${formatTemp(weather.dailyLow)} · " +
+            "↑${weather.sunrise} ↓${weather.sunset}"
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(smallIcon)
-            .setContentTitle(
-                "${formatTemp(weather.currentTemperature)} · ${WeatherCode.description(weather.currentWeatherCode)}"
-            )
-            .setContentText(context.getString(R.string.notification_fallback_text))
+            .setContentTitle(title)
+            .setContentText(subtitle)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setCustomBigContentView(remoteViews)
             .setOngoing(true)
