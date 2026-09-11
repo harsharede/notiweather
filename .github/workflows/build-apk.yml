@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,3 +38,19 @@ jobs:
         with:
           name: notiweather-debug
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Publish debug APK as a release asset
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: debug-latest
+          name: Latest debug build
+          body: |
+            Automatically built from the latest commit on `main` (${{ github.sha }}).
+            Debug build, signed with Gradle's default debug key — fine for
+            sideloading/testing, not a Play Store release.
+          prerelease: true
+          make_latest: true
+          files: app/build/outputs/apk/debug/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

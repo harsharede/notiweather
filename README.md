@@ -31,9 +31,9 @@ cached is available.
 
 ## Download
 
-**Android:** every push builds a debug APK you can download from the
-[Actions tab](https://github.com/harsharede/notiweather/actions/workflows/build-apk.yml)
-(open the latest successful run → Artifacts). Sideloading it requires
+**Android:** grab the latest APK from the
+[Releases page](https://github.com/harsharede/notiweather/releases/latest) —
+every push to `main` rebuilds it. Sideloading it requires
 enabling "install from unknown sources" for whichever app you download it
 with. It's signed with Gradle's default debug key, which is fine for
 sharing/testing but not for the Play Store.
