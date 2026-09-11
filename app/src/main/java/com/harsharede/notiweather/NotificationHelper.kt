@@ -41,7 +41,9 @@ object NotificationHelper {
             return
         }
 
-        val smallIcon = IconCompat.createWithBitmap(buildTemperatureIcon(weather.currentTemperature))
+        val smallIcon = IconCompat.createWithBitmap(
+            buildStatusBarIcon(weather.currentTemperature, weather.currentWeatherCode)
+        )
 
         val remoteViews = RemoteViews(context.packageName, R.layout.notification_expanded)
         remoteViews.setTextViewText(R.id.tv_now_label, context.getString(R.string.label_now))
@@ -118,36 +120,62 @@ object NotificationHelper {
     private fun formatHourLabel(isoTime: String): String = isoTime.substringAfter('T')
 
     /**
-     * Draws the rounded temperature (e.g. "18°") as an opaque white glyph on
-     * a transparent background. The status bar only honors the alpha channel
-     * of a notification's small icon, so this renders as a plain silhouette
-     * of the number — the same trick apps use to show a battery percentage
-     * as their status bar icon.
+     * Draws the weather glyph and the rounded temperature (e.g. "18°") side
+     * by side as the notification's small (status bar) icon. There's no
+     * animated cycling between them — a continuously-updating status bar
+     * icon would mean a timer running as long as the screen is on, which
+     * defeats the point of only refreshing in the background — so both are
+     * shown at once instead.
+     *
+     * The status bar only honors the alpha channel of a small icon (Android
+     * renders every app's status bar icon as a plain white silhouette,
+     * regardless of what colors are actually drawn here), so the weather
+     * glyph shows up as a white outline rather than in color — the same way
+     * the temperature digits already do.
      */
-    private fun buildTemperatureIcon(temperature: Double): Bitmap {
+    private fun buildStatusBarIcon(temperature: Double, weatherCode: Int): Bitmap {
         val size = 96
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        val text = "${temperature.roundToInt()}°"
 
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        val tempText = formatTemp(temperature)
+        val iconText = WeatherCode.emoji(weatherCode)
+
+        val tempPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             textAlign = Paint.Align.CENTER
             typeface = Typeface.create(Typeface.DEFAULT_BOLD, Typeface.BOLD)
         }
+        val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textAlign = Paint.Align.CENTER
+        }
 
-        var textSize = 60f
+        val iconCenterX = size * 0.28f
+        val tempCenterX = size * 0.70f
+        fitTextSize(iconPaint, iconText, size * 0.5f, startSize = 56f)
+        fitTextSize(tempPaint, tempText, size * 0.58f, startSize = 56f)
+
+        drawCentered(canvas, iconText, iconPaint, iconCenterX, size / 2f)
+        drawCentered(canvas, tempText, tempPaint, tempCenterX, size / 2f)
+
+        return bitmap
+    }
+
+    private fun fitTextSize(paint: Paint, text: String, maxWidth: Float, startSize: Float) {
+        var textSize = startSize
         paint.textSize = textSize
         val bounds = Rect()
         paint.getTextBounds(text, 0, text.length, bounds)
-        while (bounds.width() > size * 0.85f && textSize > 20f) {
+        while (bounds.width() > maxWidth && textSize > 16f) {
             textSize -= 2f
             paint.textSize = textSize
             paint.getTextBounds(text, 0, text.length, bounds)
         }
+    }
 
-        val y = size / 2f - bounds.exactCenterY()
-        canvas.drawText(text, size / 2f, y, paint)
-        return bitmap
+    private fun drawCentered(canvas: Canvas, text: String, paint: Paint, x: Float, y: Float) {
+        val bounds = Rect()
+        paint.getTextBounds(text, 0, text.length, bounds)
+        canvas.drawText(text, x, y - bounds.exactCenterY(), paint)
     }
 }
