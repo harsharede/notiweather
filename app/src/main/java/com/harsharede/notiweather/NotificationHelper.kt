@@ -22,14 +22,18 @@ import androidx.core.graphics.drawable.IconCompat
 import kotlin.math.roundToInt
 
 /**
- * Builds and shows the single ongoing weather notification: the current
- * temperature drawn as the small (status bar) icon; place name, today's
- * high/low and sunrise/sunset in the title/subtitle (visible whether the
- * notification is collapsed or expanded); and current + next two hours
- * laid out in the expanded custom view. Marked [NotificationCompat.Builder.setOngoing]
- * so it isn't swipeable in stock Android, but some OEM notification shades
- * (and Android 14+'s relaxed dismissal rules) let the user swipe it away
- * anyway — [NotificationDismissReceiver] catches that and re-posts it.
+ * Builds and shows the single weather notification: the current temperature
+ * drawn as the small (status bar) icon; place name, today's high/low and
+ * sunrise/sunset in the title/subtitle (visible whether the notification is
+ * collapsed or expanded); and current + next two hours laid out in the
+ * expanded custom view.
+ *
+ * Deliberately NOT marked ongoing: on some OEM shades (observed on Samsung
+ * One UI) a swiped-away "ongoing" notification is removed through a path
+ * that skips the standard dismiss callback entirely, so
+ * [NotificationDismissReceiver]'s repost never fires. A plain, genuinely
+ * dismissible notification goes through the normal flow instead, so the
+ * delete intent reliably fires and the repost actually runs.
  */
 object NotificationHelper {
 
@@ -102,7 +106,6 @@ object NotificationHelper {
             .setContentText(subtitle)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setCustomBigContentView(remoteViews)
-            .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(true)
             .setWhen(System.currentTimeMillis())
